@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <meta charset="utf-8">
+    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.10/angular-ui-router.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="/javascripts/angularApp.js"></script>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/style.css">
+  </head>
+  <body ng-app="RockstarIM">
+  	<nav class="nav-full navbar navbar-default pull-right" ng-controller="NavCtrl">
+	    <ul class="nav navbar-nav">
+	      <li><a href="/#/Users">Home</a></li>
+	      <li ng-show="isLoggedIn()"><a ng-click="reset()" href="#/RockstarIM/{{ profileId() }}">{{ currentUser().name }} <span class="nfy">{{ notify().notification }}</span></a></li>
+	      <!-- <li ng-show="isLoggedIn();"><p class="nfy" ng-init="notify()" class="notify">{{ notify().notification }}</p></li>
+ -->	      <li ng-show="isLoggedIn()"><a href="" ng-click="logOut()">Log Out</a></li>
+	      <li ng-hide="isLoggedIn()"><a href="/#/login">Log In</a></li>
+	      <li ng-hide="isLoggedIn()"><a href="/#/register">Register</a></li>
+	    </ul>
+	 </nav>
+  	<div class="row">
+  			<ui-view></ui-view>
+	</div>
+
+	<script type="text/ng-template" id="/login.html">
+		<div class="col-sm-offset-4 col-md-offset-4 col-xs-12 col-sm-4 col-md-4">
+		  <div class="page-header">
+		    <h1>RockstarIM</h1>
+		  </div>
+
+		  <div ng-show="error" class="alert alert-danger row">
+		    <span>{{ error.message }}</span>
+		  </div>
+
+		  <form ng-submit="logIn()"
+		    style="margin-top:30px;">
+		    <h3>Log In</h3>
+
+		    <div class="form-group">
+		      <input type="text"
+		      class="form-control"
+		      placeholder="Username"
+		      ng-model="user.username"></input>
+		    </div>
+		    <div class="form-group">
+		      <input type="password"
+		      class="form-control"
+		      placeholder="Password"
+		      ng-model="user.password"></input>
+		    </div>
+		    <button type="submit" class="btn">Log In</button>
+		  </form>
+		</div>
+
+	 </script>
+	<script type="text/ng-template" id="/register.html">
+	<div class="col-sm-offset-4 col-md-offset-4 col-xs-12 col-sm-4 col-md-4">
+			<div class="page-header">
+				<h1>RockstarIM</h1>
+			</div>
+
+			<div ng-show="error" class="alert alert-danger row">
+				<span>{{ error.message }}</span>
+			</div>
+
+			<form ng-submit="register()" style="margin-top:30px;">
+				<h3>Register</h3>
+
+				<div class="form-group">
+			  	    <input type="text" class="form-control" placeholder="Username" ng-model="user.username"></input>
+				</div>
+				<div class="form-group">
+				    <input type="password" class="form-control" placeholder="Password" ng-model="user.password"></input>
+				</div>
+				<div class="form-group">
+				    <input type="text" class="form-control" placeholder="Name to display" ng-model="user.name"></input>
+				</div>	
+				<div class="form-group">
+				    <input type="text" class="form-control" placeholder="Age" ng-model="user.age"></input>
+				</div>	
+
+				<div class="form-group">
+				    <input type="text" class="form-control" placeholder="Picture URL" ng-model="user.url"></input>
+				</div>			
+				<button type="submit" class="btn btn-primary">Register</button>
+		    </form>
+	</div>
+	</script>
+	<script type='text/ng-template' id="/RockstarIM.html">
+		<div ng-init="notify(currentUser())" class="col-lg-offset-1 col-lg-12">
+				<div class="col-sm-4 col-md-4">
+					<div class="col-xl-3">
+						<div class="profile-wrap">
+							<div class="userPicture">
+								<img width="100%" ng-src="{{ currentUser().picture }}" />								
+							</div>
+							<div class='profile-text'>
+				    			<p>{{ currentUser().display }}</p>
+				    			<p>{{ currentUser().age }}</p>
+				    	 	</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-4 col-md-4">
+					<div class='col-xl-3 chat-box'>
+				  	<div class="col-md-12 chatAdjust" ng-repeat="messages in message">
+				  		<p>
+				  			From: 
+				  			{{messages.fromUser}}
+				  		</p>
+				  		<p style="margin-left:10px;">
+					  		Message: 
+					  		<br>
+					  		{{ messages.text }}
+					  	</p>
+				  	</div>
+					</div>
+					<div class="col-xl-3 chatForm">
+				  	<form ng-submit="addMessage()"	style="margin-top:31px;">
+				  		<div class="form-group">
+					    	<input class="form-control" type="text" placeholder="Message" ng-model="text"></input>			
+					    </div>								    
+						<button ng-click="" class="btn btn-chat" type="submit">Post</button>						   
+					</form>
+					</div>
+				</div>
+				<div class="col-sm-4 col-md-4">
+					<div class="col-xl-3">
+						<div class="profile-wrap">
+							<div class="userPicture">
+								<img width="100%" ng-src="{{ user.pictureUrl }}" />
+							</div>
+							<div class='profile-text'>
+								<p ng-init='private(user._id)'>{{ user.displayName }}</p>
+				    			<p>{{ user.age }}</p>
+				    		</div>
+						</div>
+					</div>
+				</div>
+		</div>
+    </script>
+    <script type="text/ng-template" id="/users.html">
+    	<div class="col-md-7 col-md-offset-3 col-sm-offset-4 col-xs-offset-1">
+    		<div ng-repeat="user in userReg">
+	    		<div class="profile-wrap">
+		    			<div class="userPicture">
+		    				<img width="100%" ng-src="{{ user.pictureUrl }}" />
+		    			</div>
+		    			<div class='profile-text col-xl-6'>
+			    			<p>{{ user.displayName }}</p>
+			    			<p>{{ user.age }}</p>
+			    			<p>{{ user.email }}</p>
+			    		</div>
+			    		<div ng-show="isLoggedIn()" class="col-xl-6">
+			    			<a href="#/RockstarIM/{{ user._id }}"><button class="btn btn-chat">Chat!</button></a>
+			    		</div>
+		    	</div>
+    		</div>
+    	</div>
+    </script>
+  </body>
+
+</html>
