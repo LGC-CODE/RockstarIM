@@ -13,7 +13,7 @@ require('./models/UserLog');
 require('./config/passport');
 
 
-mongoose.connect('mongodb://localhost/rockstarImFinal', function(){
+mongoose.connect(process.env.MONGOLAB_URI || 'mongodb://localhost/rockstarImFinal', function(){
   console.log('mongodb connection successful');
 });
 
