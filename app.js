@@ -23,7 +23,7 @@ var routes = require('./routes/index');
 var users = require('./routes/users');
 
 var app = express();
-// require('./models/msg');
+require('./models/msg');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
