@@ -13,7 +13,7 @@ require('./models/UserLog');
 require('./config/passport');
 
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://appAdmin:Gokussj6@ds051615.mlab.com:51615/heroku_x2hs12zq' , function(err){
+mongoose.connect('mongodb://appAdmin:Gokussj6@ds051615.mlab.com:51615/heroku_x2hs12zq' , function(err){
   if(err){ return err; }
 
   console.log('MONGODB_URI:', process.env.MONGODB_URI);
