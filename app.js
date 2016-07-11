@@ -13,9 +13,10 @@ require('./models/UserLog');
 require('./config/passport');
 
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/rockstarImFinal' , function(err){
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://appAdmin:Gokussj6@ds051615.mlab.com:51615/heroku_x2hs12zq' , function(err){
   if(err){ return err; }
-  console.log('mongodb connection successful');
+
+  console.log('MONGODB_URI:', process.env.MONGODB_URI);
 });
 
 var routes = require('./routes/index');
@@ -70,6 +71,5 @@ app.use(function(err, req, res, next) {
     error: {}
   });
 });
-
 
 module.exports = app;
