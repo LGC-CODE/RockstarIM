@@ -7,13 +7,13 @@
     <link href="/stylesheets/bootstrap.min.css" rel="stylesheet">
     <script src="/javascripts/angular.js"></script>
     <script src="/javascripts/angular-ui-router.js"></script>
-    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
     <script src="/javascripts/angularApp.js"></script>
     <link rel="stylesheet" type="text/css" href="/stylesheets/style.css">
   </head>
   <body ng-app="RockstarIM">
-  	<nav class="nav-full navbar navbar-default pull-right" ng-controller="NavCtrl">
-	    <ul class="nav navbar-nav">
+  	<nav class="nav-full navbar navbar-default" ng-controller="NavCtrl">
+	    <ul class="pull-right nav navbar-nav">
 	      <li><a href="/#/Users">Home</a></li>
 	      <li ng-show="isLoggedIn()"><a ng-click="reset()" href="#/RockstarIM/{{ profileId() }}">{{ currentUser().name }} <span class="nfy">{{ notify().notification }}</span></a></li>
 	      <!-- <li ng-show="isLoggedIn();"><p class="nfy" ng-init="notify()" class="notify">{{ notify().notification }}</p></li>
@@ -22,9 +22,8 @@
 	      <li ng-hide="isLoggedIn()"><a href="/#/register">Register</a></li>
 	    </ul>
 	 </nav>
-  	<div class="row">
-  			<ui-view></ui-view>
-	</div>
+  	
+  	<ui-view></ui-view>
 
 	<script type="text/ng-template" id="/login.html">
 		<div class="col-sm-offset-4 col-md-offset-4 col-xs-12 col-sm-4 col-md-4">
@@ -52,13 +51,13 @@
 		      placeholder="Password"
 		      ng-model="user.password"></input>
 		    </div>
-		    <button type="submit" class="btn">Log In</button>
+		    <button type="submit" class="btn btn-default">Log In</button>
 		  </form>
 		</div>
 
 	 </script>
 	<script type="text/ng-template" id="/register.html">
-	<div class="col-sm-offset-4 col-md-offset-4 col-xs-12 col-sm-4 col-md-4">
+	<div class="container">
 			<div class="page-header">
 				<h1>RockstarIM</h1>
 			</div>
@@ -86,80 +85,94 @@
 				<div class="form-group">
 				    <input type="text" class="form-control" placeholder="Picture URL" ng-model="user.url"></input>
 				</div>			
-				<button type="submit" class="btn btn-primary">Register</button>
+				<button type="submit" class="btn btn-default">Register</button>
 		    </form>
 	</div>
 	</script>
 	<script type='text/ng-template' id="/RockstarIM.html">
-		<div ng-init="notify(currentUser())" class="col-lg-offset-1 col-lg-12">
+		<div class="container">
 				<div class="col-sm-4 col-md-4">
-					<div class="col-xl-3">
-						<div class="profile-wrap">
-							<div class="userPicture">
-								<img width="100%" ng-src="{{ currentUser().picture }}" />								
-							</div>
-							<div class='profile-text'>
-				    			<p>{{ currentUser().display }}</p>
-				    			<p>{{ currentUser().age }}</p>
-				    	 	</div>
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h3 class="panel-title">User</h3>
+						</div>
+						<div class="panel-body">
+							<a href="{{ currentUser().picture }}" class="thumbnail">
+								<img src="{{ currentUser().picture }}" />
+							</a>
+							<p>{{ currentUser().display }}</p>
+					    	<p>{{ currentUser().age }}</p>
+						</div>
+						<div class="panel-footer">Host</div>
+					</div>
+				</div>
+				
+				<div class="col-sm-4 col-md-4">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h3 class="panel-title">Messages</h3>
+						</div>
+						<div class="panel-body">
+							<div class="chatAdjust" ng-repeat="messages in message">
+					  		<p>
+					  			From: {{messages.fromUser}}
+					  		</p>
+					  		<p style="margin-left:10px;">
+						  		{{ messages.text }}
+						  	</p>
+					  	</div>
+						</div>
+						<div class="panel-footer">
+							<form ng-submit="addMessage()"	style="margin-top:31px;">
+						  		<div class="form-group">
+							    	<input class="form-control" type="text" placeholder="Message" ng-model="text"></input>			
+							    </div>								    
+								<button class="btn btn-chat" type="submit">Post</button>						   
+							</form>
 						</div>
 					</div>
 				</div>
+				
 				<div class="col-sm-4 col-md-4">
-					<div class='col-xl-3 chat-box'>
-				  	<div class="col-md-12 chatAdjust" ng-repeat="messages in message">
-				  		<p>
-				  			From: 
-				  			{{messages.fromUser}}
-				  		</p>
-				  		<p style="margin-left:10px;">
-					  		Message: 
-					  		<br>
-					  		{{ messages.text }}
-					  	</p>
-				  	</div>
-					</div>
-					<div class="col-xl-3 chatForm">
-				  	<form ng-submit="addMessage()"	style="margin-top:31px;">
-				  		<div class="form-group">
-					    	<input class="form-control" type="text" placeholder="Message" ng-model="text"></input>			
-					    </div>								    
-						<button ng-click="" class="btn btn-chat" type="submit">Post</button>						   
-					</form>
-					</div>
-				</div>
-				<div class="col-sm-4 col-md-4">
-					<div class="col-xl-3">
-						<div class="profile-wrap">
-							<div class="userPicture">
-								<img width="100%" ng-src="{{ user.pictureUrl }}" />
-							</div>
-							<div class='profile-text'>
-								<p ng-init='private(user._id)'>{{ user.displayName }}</p>
-				    			<p>{{ user.age }}</p>
-				    		</div>
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h3 class="panel-title">User</h3>
 						</div>
+						<div class="panel-body">
+							<a href="{{ user.pictureUrl }}" class="thumbnail">
+								<img src="{{ user.pictureUrl }}" />
+							</a>
+							<p>{{ user.displayName }}</p>
+					    	<p>{{ user.age }}</p>
+						</div>
+						<div class="panel-footer">Guest</div>
 					</div>
 				</div>
 		</div>
     </script>
     <script type="text/ng-template" id="/users.html">
-    	<div class="col-md-7 col-md-offset-3 col-sm-offset-4 col-xs-offset-1">
-    		<div ng-repeat="user in userReg">
-	    		<div class="profile-wrap">
-		    			<div class="userPicture">
-		    				<img width="100%" ng-src="{{ user.pictureUrl }}" />
-		    			</div>
-		    			<div class='profile-text col-xl-6'>
-			    			<p>{{ user.displayName }}</p>
-			    			<p>{{ user.age }}</p>
-			    			<p>{{ user.email }}</p>
+    	<div class="container">
+    		<div ng-repeat="user in userReg" class="col-sm-4 col-md-4">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h3 class="panel-title">User</h3>
+					</div>
+					<div class="panel-body">
+						<a href="{{ user.pictureUrl }}" class="thumbnail thumbnail-cropped">
+							<img src="{{ user.pictureUrl }}" />
+						</a>
+						<p>{{ user.displayName }}</p>
+		    			<p>{{ user.age }}</p>
+		    			<p>{{ user.email }}</p>
+					</div>
+					<div class="panel-footer">
+						<div ng-show="isLoggedIn()">
+			    			<a href="#/RockstarIM/{{ user._id }}"><button class="btn btn-default">Chat!</button></a>
 			    		</div>
-			    		<div ng-show="isLoggedIn()" class="col-xl-6">
-			    			<a href="#/RockstarIM/{{ user._id }}"><button class="btn btn-chat">Chat!</button></a>
-			    		</div>
-		    	</div>
-    		</div>
+			    		<div ng-hide="isLoggedIn">Log in to begin chatting!</div>
+					</div>
+				</div>
+			</div>
     	</div>
     </script>
   </body>

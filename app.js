@@ -13,7 +13,7 @@ require('./models/UserLog');
 require('./config/passport');
 
 
-mongoose.connect('mongodb://appAdmin:Gokussj6@ds051615.mlab.com:51615/heroku_x2hs12zq' , function(err){
+mongoose.connect('mongodb://localhost:27017/rockstar' , function(err){
   if(err){ return err; }
 
   console.log('MONGODB_URI:', process.env.MONGODB_URI);

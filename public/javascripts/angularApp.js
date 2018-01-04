@@ -60,7 +60,6 @@ app.factory('count',['$http','users','auth', function($http, users, auth){ //cre
 				console.log(data, 'logging data parameter addCount');
 			});
 
-		// console.log(obj, 'obj object addcount posting');
 	};	
 
 	v.resetCount = function(obj){
@@ -156,29 +155,34 @@ app.factory('auth', ['$http', '$window', function($http, $window){
 	return auth;
 }]);
 
-app.factory('socket', function ($rootScope) {
-  var socket = io.connect('http://localhost:80');
-  return {
-    on: function (eventName, callback) {
-      socket.on(eventName, function () {  
-        var args = arguments;
-        $rootScope.$apply(function () {
-          callback.apply(socket, args);
-        });
-      });
-    },
-    emit: function (eventName, data, callback) {
-      socket.emit(eventName, data, function () {
-        var args = arguments;
-        $rootScope.$apply(function () {
-          if (callback) {
-            callback.apply(socket, args);
-          }
-        });
-      })
-    }
-  };
-});
+app.factory('socket', ['$rootScope', '$window', function ($rootScope, $window) {
+  
+  //return {
+  //	init: function(host){
+  //		return io(host);
+  //	},
+  //  on: function (socket, eventName, callback) {
+  //    socket.on(eventName, function () {  
+  //      var args = arguments;
+  //      $rootScope.$apply(function () {
+  //        callback.apply(socket, args);
+  //      });
+  //    });
+  //  },
+  //  emit: function (socket, eventName, data, callback) {
+  //    socket.emit(eventName, data, function () {
+  //      var args = arguments;
+  //      $rootScope.$apply(function () {
+  //        if (callback) {
+  //          callback.apply(socket, args);
+  //        }
+  //      });
+  //    })
+  //  }
+  //};
+  
+  return {};
+}]);
 
 app.config([
 		'$stateProvider',
@@ -277,10 +281,10 @@ app.controller('mainCtrl', [ //RockstarIM
 	'users',
 	'auth',
 	'userRetrieve',
-	'socket',
 	'identification',
 	'count',
-	function($scope, $stateParams, users, auth, userRetrieve, socket, identification, count){
+	'$window',
+	function($scope, $stateParams, users, auth, userRetrieve, identification, count, $window){
 	$scope.message = [];
 	$scope.text = "";
 	$scope.userReg = users.users;
@@ -288,43 +292,31 @@ app.controller('mainCtrl', [ //RockstarIM
 	$scope.currentUser = auth.currentUser;
 	$scope.user =  userRetrieve;
 	$scope.returnUser = $scope.currentUser().display;
+	
+	var socket = io($window.location.host);
+	
 	var usr =  users.users;
-	console.log($scope.user, 'main ctrl scope user NEW');
-	$scope.private = function(id){
-		$scope.ident = id;
-		socket.emit('subscribe', $scope.ident);
-		socket.emit('send message', {			//send data to server
-			room: $scope.ident,
-			text: 'Welcome to Private Room',
-			from: 'RockstarIM'
+	
+	var private = function(room_id){
+		socket.emit('join', {room: room_id, user: $scope.returnUser});
+		
+		socket.on(room_id, data => {
+			
+			$scope.message.unshift({
+				text: data.text,					//display text and name
+				fromUser: data.from,
+				room: data.room
+		 	});
+			
+			$scope.$apply();
 		});
-
-		identification.ids(id);
-
 	}
-	// $scope.nfy = function(){
-
-	// 		for (var i = 0; i < usr.length; i++) {
-	// 			if(!auth.isLoggedIn()){
-	// 				console.log('user is logged off');
-	// 			}
-	// 			else {
-	// 				if(usr[i].username == auth.currentUser().name){
-	// 					console.log(usr[i].age , 'obj returned notify func');
-	// 					return usr[i];
-	// 				} else {
-	// 					console.log('ERROR');
-	// 					return 'user not found';
-	// 				}
-	// 			} 
-	// 		}
-	// };
-
-
+	
+	private($scope.user._id);
+	
 	$scope.addMessage = function(){
-
 		if(!$scope.text) { return; }
-		socket.emit('send message', { 
+		socket.emit($scope.user._id, { 
 			room: $scope.ident,
 			text: $scope.text,
 			from: $scope.returnUser
@@ -332,18 +324,6 @@ app.controller('mainCtrl', [ //RockstarIM
 
 		$scope.text = "";
 	};
-
-		//receive data from client to server to client
-	socket.on('private', function(data){		//update view 
-		$scope.message.unshift({
-			text: data.text,					//display text and name
-			fromUser: data.from,
-			room: data.room
-	 	});
-
-
-		count.addCount($scope.user);
-	});
 
 }]);
 
@@ -368,7 +348,7 @@ app.controller('AuthCtrl', [
 
 
 		$scope.register = function(){
-			if (totalAge === NaN) { return; };
+			if (totalAge === NaN) return;
 			users.createUser({
 				name: $scope.name,
 				age: totalAge,
