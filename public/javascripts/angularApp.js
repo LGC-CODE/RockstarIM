@@ -1,16 +1,7 @@
 var app = angular.module('RockstarIM',['ui.router']);
 
 app.factory('users', ['$http', 'auth', function($http, auth){ //creating service syntax
-	var o = {
-		users: [	
-			{name: 'Luis Constante', nickname: 'RedVeinz', email: 'luisconstante@yahoo.com', age: 21, pictureUrl: 'http://hostingadvice.digitalbrandsinc.netdna-cdn.com/wp-content/uploads/2015/11/JavaScript-Add-to-Array.png'},
-			{name: 'john', nickname: 'johnz', email: 'luisconstante@yahoo.com', age: 24, pictureUrl: 'https://dusyefwqqyfwe.cloudfront.net/uploads/recipe/ingredient/image/906/medium_square_medium_square_medium_square_beef-broth.jpg'},
-			{name: 'Lopez', nickname: 'bropui', email: 'luisconstante@yahoo.com', age: 18, pictureUrl: 'http://hostingadvice.digitalbrandsinc.netdna-cdn.com/wp-content/uploads/2015/11/JavaScript-Add-to-Array.png'},
-			{name: 'louie', nickname: 'playah', email: 'luisconstante@yahoo.com', age: 20, pictureUrl: 'http://d2ydh70d4b5xgv.cloudfront.net/images/1/7/rorstrand-fokus-sweden-square-serving-bowl-wow-brown-white-yellow-42c18e693607592e593f98f1a1a2ca08.jpg'},
-			{name: 'polis', nickname: 'rockstar', email: 'luisconstante@yahoo.com', age: 28, pictureUrl: 'http://hostingadvice.digitalbrandsinc.netdna-cdn.com/wp-content/uploads/2015/11/JavaScript-Add-to-Array.png'},
-			{name: 'terra', nickname: 'serios', email: 'luisconstante@yahoo.com', age: 30, pictureUrl: 'http://hostingadvice.digitalbrandsinc.netdna-cdn.com/wp-content/uploads/2015/11/JavaScript-Add-to-Array.png'},
-		]
-	};
+	var o = {};
 
 	o.getAllUsers = function(){
 		return $http.get('/allUsers').success(function(data){
@@ -34,65 +25,18 @@ app.factory('users', ['$http', 'auth', function($http, auth){ //creating service
 
 }]);
 
-app.factory('identification', function(){ //creating service syntax
-	var z = {
-		ident: []
-	};
-
-	z.ids = function(id){
-		console.log('you just checked for: ', id)
-		z.ident.push({
-			numId: id
-		});
-	};
-
-	return z;
-
-});
-
-app.factory('count',['$http','users','auth', function($http, users, auth){ //creating service syntax
-	var v = [{count: 0}]
-
-	v.addCount = function(obj){
-		return $http.put('/allUsers/' + obj._id + '/notify', obj)
-			.success(function(data){
-				// obj.notification +=1;
-				console.log(data, 'logging data parameter addCount');
-			});
-
-	};	
-
-	v.resetCount = function(obj){
-		return $http.put('/allUsers/' + obj._id + '/reset', obj)
-			.success(function(data){
-				// obj.notification +=1;
-				console.log(data, 'logging data parameter resetCount');
-		});
-	};
-
-	v.nfy = function(){
-		var usr = users.users
-			for (var i = 0; i < usr.length; i++) {
-				if(!auth.isLoggedIn()){
-					console.log('user is logged off');
-				}
-				else {
-					if(usr[i].username == auth.currentUser().name){
-						console.log(usr[i] , 'obj returned notify func');
-						return usr[i];
-					} else {
-						console.log('ERROR');
-					}
-				} 
-			}
-	};
-
-	v.keepCount = function(){
-			console.log(v.nfy(), 'this is notification property');
-
-			return v.nfy();
-	};
-
+app.factory('user-details', ['$http', '$window', function($http, $window){ //creating service syntax
+	var v = {};
+	
+	v.getNotifications = function(){
+		
+		var token = $window.localStorage['rockstar-token']
+		
+		if(token){
+			
+		}
+	}
+	
 	return v;
 
 }]);
@@ -126,6 +70,7 @@ app.factory('auth', ['$http', '$window', function($http, $window){
 			var token = auth.getToken();
 			var payload = JSON.parse($window.atob(token.split('.')[1]));
 			var info = {
+				_id: payload._id,
 				name: payload.username,
 				age: payload.age,
 				picture: payload.pictureUrl,
@@ -156,32 +101,28 @@ app.factory('auth', ['$http', '$window', function($http, $window){
 }]);
 
 app.factory('socket', ['$rootScope', '$window', function ($rootScope, $window) {
-  
-  //return {
-  //	init: function(host){
-  //		return io(host);
-  //	},
-  //  on: function (socket, eventName, callback) {
-  //    socket.on(eventName, function () {  
-  //      var args = arguments;
-  //      $rootScope.$apply(function () {
-  //        callback.apply(socket, args);
-  //      });
-  //    });
-  //  },
-  //  emit: function (socket, eventName, data, callback) {
-  //    socket.emit(eventName, data, function () {
-  //      var args = arguments;
-  //      $rootScope.$apply(function () {
-  //        if (callback) {
-  //          callback.apply(socket, args);
-  //        }
-  //      });
-  //    })
-  //  }
-  //};
-  
-  return {};
+	var socket = io.connect($window.location.host);
+	
+	return {
+	  on: function (socket, eventName, callback) {
+	    socket.on(eventName, function () {  
+	      var args = arguments;
+	      $rootScope.$apply(function () {
+	        callback.apply(socket, args);
+	      });
+	    });
+	  },
+	  emit: function (socket, eventName, data, callback) {
+	    socket.emit(eventName, data, function () {
+	      var args = arguments;
+	      $rootScope.$apply(function () {
+	        if (callback) {
+	          callback.apply(socket, args);
+	        }
+	      });
+	    })
+	  }
+	};
 }]);
 
 app.config([
@@ -275,31 +216,25 @@ app.config([
 				});
 		}]);
 
-app.controller('mainCtrl', [ //RockstarIM
-	'$scope',
-	'$stateParams',
-	'users',
-	'auth',
-	'userRetrieve',
-	'identification',
-	'count',
-	'$window',
-	function($scope, $stateParams, users, auth, userRetrieve, identification, count, $window){
+app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 'auth', '$window','socket',
+	function($scope, $stateParams, userRetrieve, users, auth, $window, socket){
 	$scope.message = [];
 	$scope.text = "";
 	$scope.userReg = users.users;
 	$scope.UserLoggedIn = auth.currentDisplay;
 	$scope.currentUser = auth.currentUser;
-	$scope.user =  userRetrieve;
-	$scope.returnUser = $scope.currentUser().display;
+	$scope.isLoggedIn = auth.isLoggedIn;
+	$scope.logOut = auth.logOut;
 	
-	var socket = io($window.location.host);
+	$scope.user = userRetrieve;
+	$scope.returnUser = $scope.currentUser();
 	
-	var usr =  users.users;
+	$scope.resetNotification = function(){
+		notification($scope.returnUser.display, 'reset');
+	};
 	
 	var private = function(room_id){
-		socket.emit('join', {room: room_id, user: $scope.returnUser});
-		
+		socket.emit('join', {room: room_id, user: $scope.returnUser.display});
 		socket.on(room_id, data => {
 			
 			$scope.message.unshift({
@@ -308,18 +243,28 @@ app.controller('mainCtrl', [ //RockstarIM
 				room: data.room
 		 	});
 			
+			if($scope.user.display === $scope.returnUser.display) {
+				notification($scope.returnUser.display, 'add');
+			}
+			
 			$scope.$apply();
 		});
 	}
 	
 	private($scope.user._id);
 	
+	var notification = function(username, type){
+		type === 'add' ? 
+			socket.emit(username, {type: 'add', user: $scope.returnUser.display}) : 
+				socket.emit(username, {type: 'reset', user: $scope.returnUser.display});
+	}
+	
 	$scope.addMessage = function(){
 		if(!$scope.text) { return; }
 		socket.emit($scope.user._id, { 
 			room: $scope.ident,
 			text: $scope.text,
-			from: $scope.returnUser
+			from: $scope.returnUser.display
 		});
 
 		$scope.text = "";
@@ -348,7 +293,7 @@ app.controller('AuthCtrl', [
 
 
 		$scope.register = function(){
-			if (totalAge === NaN) return;
+			if (isNaN(totalAge)) return;
 			users.createUser({
 				name: $scope.name,
 				age: totalAge,
@@ -371,43 +316,11 @@ app.controller('AuthCtrl', [
 		};
 }]);
 
-app.controller('NavCtrl', [
-	'$scope',
-	'auth',
-	'users',
-	'identification',
-	'count',
-	function($scope, auth, users, identification, count){
-		var usr = users.users;
-		$scope.isLoggedIn = auth.isLoggedIn;
-		$scope.currentUser = auth.currentUser;
-		$scope.logOut = auth.logOut;
-		console.log('count', count[0].count);
-
-		$scope.reset = function(){
-			count.resetCount(count.nfy());
-		}
-
-		$scope.notify = function(){
-			var num = count.keepCount();
-			return num;
-		}
-
-		$scope.profileId = function(){
-			
-			for (var i = 0; i < usr.length; i++) {
-				if(!auth.isLoggedIn()){
-					console.log('user is logged off');
-				}
-				else {
-					if(usr[i].username == auth.currentUser().name){
-						console.log(usr[i]._id, 'Success >>> profile id');
-						return usr[i]._id;
-					} else {
-						console.log('ERROR');
-					}
-				} 
-			};
-		}
-
-	}]);
+app.controller('navCtrl', ['$scope', 'auth', 'users', 'socket', function($scope, auth, users, socket){
+	$scope.returnUser = auth.currentUser();
+	
+	// socket.on($scope.returnUser.display, data => {
+	// 	console.log(data.notification, 'notification number');
+	// 	$scope.userNotification = data.notification;
+	// });
+}]);

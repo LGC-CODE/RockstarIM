@@ -56,4 +56,16 @@ UserSchema.methods.generateJWT =  function(){
 	}, 'SECRET');
 };
 
+UserSchema.methods.alert = function(type, cb){
+	if(type === 'add'){
+		this.notification += 1;
+		this.save(cb);
+	} else if(type === 'reset'){
+		this.notification = 0;
+		this.save(cb);
+	} else {
+		return this.notification;
+	}
+}
+
 mongoose.model('LogUser', UserSchema);

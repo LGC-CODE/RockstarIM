@@ -1,7 +1,7 @@
 body {
-	background: url('https://static.pexels.com/photos/21492/pexels-photo.jpg') fixed;
+	background: url('https://thumbs.dreamstime.com/b/abstract-d-white-geometric-background-white-seamless-texture-shadow-simple-clean-white-background-texture-d-interior-wal-wall-47348922.jpg') fixed;
+	background-repeat: repeat;
 	background-size: cover;
-	background-repeat: no-repeat;
 }
 
 h1, h3 {
@@ -11,4 +11,9 @@ h1, h3 {
 .thumbnail-cropped {
 	height: 300px;
 	overflow: hidden;
+}
+
+.panel-body-scroll {
+	overflow-y: scroll;
+	height: 15pc;
 }
