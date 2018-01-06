@@ -1,7 +1,7 @@
 var app = angular.module('RockstarIM',['ui.router']);
 
 app.factory('users', ['$http', 'auth', function($http, auth){ //creating service syntax
-	var o = {};
+	var o = { users: [] };
 
 	o.getAllUsers = function(){
 		return $http.get('/allUsers').success(function(data){
@@ -101,28 +101,9 @@ app.factory('auth', ['$http', '$window', function($http, $window){
 }]);
 
 app.factory('socket', ['$rootScope', '$window', function ($rootScope, $window) {
-	var socket = io.connect($window.location.host);
-	
-	return {
-	  on: function (socket, eventName, callback) {
-	    socket.on(eventName, function () {  
-	      var args = arguments;
-	      $rootScope.$apply(function () {
-	        callback.apply(socket, args);
-	      });
-	    });
-	  },
-	  emit: function (socket, eventName, data, callback) {
-	    socket.emit(eventName, data, function () {
-	      var args = arguments;
-	      $rootScope.$apply(function () {
-	        if (callback) {
-	          callback.apply(socket, args);
-	        }
-	      });
-	    })
-	  }
-	};
+  var socket = io($window.location.host);
+  return socket;
+  
 }]);
 
 app.config([
@@ -220,21 +201,15 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 	function($scope, $stateParams, userRetrieve, users, auth, $window, socket){
 	$scope.message = [];
 	$scope.text = "";
-	$scope.userReg = users.users;
-	$scope.UserLoggedIn = auth.currentDisplay;
-	$scope.currentUser = auth.currentUser;
-	$scope.isLoggedIn = auth.isLoggedIn;
-	$scope.logOut = auth.logOut;
-	
-	$scope.user = userRetrieve;
-	$scope.returnUser = $scope.currentUser();
+	$scope.guest = auth.currentUser();
+	$scope.host = userRetrieve;
 	
 	$scope.resetNotification = function(){
-		notification($scope.returnUser.display, 'reset');
+		//notification($scope.host.displayName, 'reset');
 	};
 	
-	var private = function(room_id){
-		socket.emit('join', {room: room_id, user: $scope.returnUser.display});
+	function private(room_id){
+		socket.emit('join', {room: room_id, user: $scope.guest.display});
 		socket.on(room_id, data => {
 			
 			$scope.message.unshift({
@@ -243,28 +218,29 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 				room: data.room
 		 	});
 			
-			if($scope.user.display === $scope.returnUser.display) {
-				notification($scope.returnUser.display, 'add');
-			}
+			// if($scope.host.displayName === $scope.guest.display) {
+			// 	notification($scope.host.displayName, 'add');
+			// }
 			
 			$scope.$apply();
+
 		});
-	}
+	};
 	
-	private($scope.user._id);
+	private($scope.host._id);
 	
 	var notification = function(username, type){
 		type === 'add' ? 
-			socket.emit(username, {type: 'add', user: $scope.returnUser.display}) : 
-				socket.emit(username, {type: 'reset', user: $scope.returnUser.display});
+			socket.emit(username, {type: 'add', user: $scope.host.displayName}) : 
+				socket.emit(username, {type: 'reset', user: $scope.host.displayName});
 	}
 	
 	$scope.addMessage = function(){
 		if(!$scope.text) { return; }
-		socket.emit($scope.user._id, { 
+		socket.emit($scope.host._id, { 
 			room: $scope.ident,
 			text: $scope.text,
-			from: $scope.returnUser.display
+			from: $scope.guest.display
 		});
 
 		$scope.text = "";
@@ -277,8 +253,9 @@ app.controller('usersCtrl' , [
 	'users', 
 	'auth',
 	function($scope, users, auth){
+	
 	$scope.isLoggedIn =  auth.isLoggedIn;
-	$scope.userReg = users.users;
+	$scope.users = users.users;
 	
 }]);
 
@@ -316,11 +293,13 @@ app.controller('AuthCtrl', [
 		};
 }]);
 
-app.controller('navCtrl', ['$scope', 'auth', 'users', 'socket', function($scope, auth, users, socket){
-	$scope.returnUser = auth.currentUser();
-	
-	// socket.on($scope.returnUser.display, data => {
-	// 	console.log(data.notification, 'notification number');
-	// 	$scope.userNotification = data.notification;
-	// });
+app.controller('navCtrl', ['$scope', 'auth', 'socket', function($scope, auth, socket){
+	if(auth.isLoggedIn()){
+		// $scope.user = auth.currentUser();
+		// socket.io.on($scope.user.display, data => {
+		// 	console.log(data.notification, 'notification number');
+		// 	$scope.userNotification = data.notification;
+		// });
+		console.log('user logged in');
+	}
 }]);

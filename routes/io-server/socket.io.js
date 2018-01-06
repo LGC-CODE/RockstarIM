@@ -12,6 +12,7 @@ socketIO.listen = (io) => {
         console.log('user connected');
         socket.on('join', (data) => {
             socket.join(data.room);
+            console.log(data.room, 'room received');
             
             io.emit( data.room, {
                 room: data.room,
@@ -19,32 +20,32 @@ socketIO.listen = (io) => {
                 from: 'RockstarIM'
             } );
             
-            socket.on(data.user, function(client){
-                if(client.type === 'add'){ 
-                    socketModels.getNotifications(function(model){
-                        model.find({username: client.user})
-                                .exec()
-                                    .then(user =>{
-                                        user.alert('add', (err, data)=>{
-                                            io.emit(client.user, {notification: data.notification});
-                                        });
-                                    })
-                                    .catch(err=>new Error(err));
-                    })
-                } else {
-                    socketModels.getNotifications(function(model){
-                        model.find({username: client.user})
-                                .exec()
-                                    .then(user =>{
-                                        user.alert('reset', (err, data)=>{
-                                            io.emit(client.user, {notification: data.notification});
-                                        });
-                                    })
-                                    .catch(err=> new Error(err));
-                    })
-                }
-                console.log(client, 'client');
-            });
+            // socket.on(data.user, function(client){
+            //     if(client.type === 'add'){ 
+            //         socketModels.getNotifications(function(model){
+            //             model.find({username: client.user})
+            //                     .exec()
+            //                         .then(user =>{
+            //                             user.alert('add', (err, data)=>{
+            //                                 io.emit(client.user, {notification: data.notification});
+            //                             });
+            //                         })
+            //                         .catch(err=>new Error(err));
+            //         })
+            //     } else {
+            //         socketModels.getNotifications(function(model){
+            //             model.find({username: client.user})
+            //                     .exec()
+            //                         .then(user =>{
+            //                             user.alert('reset', (err, data)=>{
+            //                                 io.emit(client.user, {notification: data.notification});
+            //                             });
+            //                         })
+            //                         .catch(err=> new Error(err));
+            //         })
+            //     }
+            //     console.log(client, 'client');
+            // });
             
             io.emit(data.user, 'hello');
             

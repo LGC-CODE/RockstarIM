@@ -7,7 +7,6 @@ var passport = require('passport');
 var jwt = require('express-jwt');
 var auth =  jwt({ secret: 'SECRET', userProperty: 'payload' });
 
-
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
@@ -59,7 +58,7 @@ router.get('/allUsers', function(req, res, next){
 });
 
 router.get('/allUsers/:id', function(req, res){
-	res.json(req.identify);
+	res.json(req.user);
 });
 
 router.put('/allUsers/:id/get-notification', function(req, res, next){

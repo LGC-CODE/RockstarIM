@@ -4,12 +4,12 @@
     <title>RockstarIM</title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <meta charset="utf-8">
+    <script src="/javascripts/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
    	<script	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <link href="/stylesheets/bootstrap.min.css" rel="stylesheet">
     <script src="/javascripts/angular.js"></script>
     <script src="/javascripts/angular-ui-router.js"></script>
-	<script src="/javascripts/socket.io.js"></script>
     <script src="/javascripts/angularApp.js"></script>
     <link rel="stylesheet" type="text/css" href="/stylesheets/style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -29,7 +29,7 @@
 	 <!--     	<div class="collapse navbar-collapse" id="nav-collapse-1">-->
 		<!--	    <ul class="nav navbar-nav navbar-right">-->
 		<!--	      <li><a href="/#/Users">Home</a></li>-->
-		<!--	      <li ng-show="isLoggedIn()"><a ng-click="reset()" href="#/RockstarIM/{{ profileId() }}">{{ currentUser().name }} <span class="nfy">{{ notify().notification }}</span></a></li>-->
+		<!--	      <li ng-show="isLoggedIn()"><a ng-click="reset()" href="#/RockstarIM/{{ profileId() }}">{{ host.name }} <span class="nfy">{{ notify().notification }}</span></a></li>-->
 		<!--	      <li ng-show="isLoggedIn()"><a href="" ng-click="logOut()">Log Out</a></li>-->
 		<!--	      <li ng-hide="isLoggedIn()"><a href="/#/login">Log In</a></li>-->
 		<!--	      <li ng-hide="isLoggedIn()"><a href="/#/register">Register</a></li>-->
@@ -157,11 +157,11 @@
 	<script type='text/ng-template' id="/RockstarIM.html">
 		<div class="container">
 				<!--------------- lightbox for host and guest --------------->
-				<div class="modal fade" id="lightbox-host" tabindex="-1" role="dialog" aria-labelledby="host">
+				<div class="modal fade" id="lightbox-host" tabindex="-1" role="dialog" aria-labelledby="guest">
 					<div class="modal-dialog modal-sm" role="document">
 						<div class="modal-content">
 							<div class="thumbnail">
-								<img src="{{ currentUser().picture }}" />
+								<img src="{{ guest.picture }}" />
 							</div>
 						</div>
 					</div>
@@ -170,23 +170,24 @@
 					<div class="modal-dialog modal-sm" role="document">
 						<div class="modal-content">
 							<div class="thumbnail">
-								<img src="{{ user.pictureUrl }}" />
+								<img src="{{ host.pictureUrl }}" />
 							</div>
 						</div>
 					</div>
 				</div>
 				 <!-----------------end lightbox------------------->
+				
 				<div class="col-sm-4 col-md-4">
 					<div class="panel panel-default">
 						<div class="panel-heading">
 							<h3 class="panel-title">User</h3>
 						</div>
 						<div class="panel-body">
-							<a href="{{ currentUser().picture }}" data-toggle="modal" data-target="#lightbox-host" class="thumbnail">
-								<img src="{{ currentUser().picture }}" />
+							<a href="{{ host.pictureUrl }}" data-toggle="modal" data-target="#lightbox-host" class="thumbnail">
+								<img src="{{ host.pictureUrl }}" />
 							</a>
-							<p>{{ currentUser().display }}</p>
-					    	<p>{{ currentUser().age }}</p>
+							<p>{{ host.displayName }}</p>
+					    	<p>{{ host.age }}</p>
 						</div>
 						<div class="panel-footer">Host</div>
 					</div>
@@ -224,11 +225,11 @@
 							<h3 class="panel-title">User</h3>
 						</div>
 						<div class="panel-body">
-							<a href="{{ user.pictureUrl }}" data-toggle="modal" data-target="#lightbox-guest" class="thumbnail">
-								<img src="{{ user.pictureUrl }}" />
+							<a href="{{ guest.picture }}" data-toggle="modal" data-target="#lightbox-guest" class="thumbnail">
+								<img src="{{ guest.picture }}" />
 							</a>
-							<p>{{ user.displayName }}</p>
-					    	<p>{{ user.age }}</p>
+							<p>{{ guest.display }}</p>
+					    	<p>{{ guest.age }}</p>
 						</div>
 						<div class="panel-footer">Guest</div>
 					</div>
@@ -237,7 +238,7 @@
     </script>
     <script type="text/ng-template" id="/users.html">
     	<div class="container">
-    		<div ng-repeat="user in userReg" class="col-sm-4 col-md-4">
+    		<div ng-repeat="user in users" class="col-sm-4 col-md-4">
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<h3 class="panel-title">User</h3>
