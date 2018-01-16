@@ -136,25 +136,12 @@ app.config([
 		function($stateProvider, $urlRouterProvider){
 
 			$stateProvider
-				.state('Home', {
-					url: '/Home',
-					templateUrl: '/home.html',
-					controller: 'homeCtrl'
-				});
-		}]);
-
-app.config([
-		'$stateProvider',
-		'$urlRouterProvider',
-		function($stateProvider, $urlRouterProvider){
-
-			$stateProvider
 				.state('Users', {
 					url: '/Users',
 					templateUrl: '/users.html',
 					controller: 'usersCtrl', 
 					resolve: {
-						userPromise: ['users', function(users){
+						userRetrieve: ['$stateParams', 'users', function($stateParams, users){
 							return users.getAllUsers();
 						}]
 					}
@@ -173,7 +160,7 @@ app.config([
 					controller: 'AuthCtrl', 
 					onEnter: ['$state', 'auth', function($state, auth){
 						if(auth.isLoggedIn()){
-							$state.go('Home');
+							$state.go('Users');
 						}
 					}]
 				});
@@ -191,7 +178,7 @@ app.config([
 					controller: 'AuthCtrl', 
 					onEnter: ['$state', 'auth', function($state, auth){
 						if(auth.isLoggedIn()){
-							$state.go('Home');
+							$state.go('Users');
 						}
 					}]
 				});
@@ -204,23 +191,26 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 	$scope.guest = auth.currentUser();
 	$scope.host = userRetrieve;
 	
-	$scope.resetNotification = function(){
-		//notification($scope.host.displayName, 'reset');
-	};
+	function notification(username, type, notifTarget){
+		type === 'add' ? 
+			socket.emit(username, {type: 'add', user: notifTarget}) : 
+				socket.emit(username, {type: 'reset', user: notifTarget});
+	}
 	
-	function private(room_id){
-		socket.emit('join', {room: room_id, user: $scope.guest.display});
-		socket.on(room_id, data => {
+	function private(host_id){
+		socket.emit('join', {room: host_id, user: $scope.guest.display.toLocaleLowerCase()});
+		socket.on(host_id, data => {
 			
 			$scope.message.unshift({
 				text: data.text,					//display text and name
 				fromUser: data.from,
 				room: data.room
 		 	});
-			
-			// if($scope.host.displayName === $scope.guest.display) {
-			// 	notification($scope.host.displayName, 'add');
-			// }
+		 	
+		 	if($scope.host.displayName !== $scope.guest.display) {
+				console.log('sending notification');
+				notification($scope.guest.display.toLocaleLowerCase(), 'add', $scope.host.displayName.toLocaleLowerCase());
+			}
 			
 			$scope.$apply();
 
@@ -228,12 +218,6 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 	};
 	
 	private($scope.host._id);
-	
-	var notification = function(username, type){
-		type === 'add' ? 
-			socket.emit(username, {type: 'add', user: $scope.host.displayName}) : 
-				socket.emit(username, {type: 'reset', user: $scope.host.displayName});
-	}
 	
 	$scope.addMessage = function(){
 		if(!$scope.text) { return; }
@@ -261,16 +245,16 @@ app.controller('usersCtrl' , [
 
 app.controller('AuthCtrl', [
 	'$scope',
-	'$state',
+	'$window',
 	'auth',
 	'users',
-	function($scope, $state, auth, users){
+	function($scope, $window, auth, users){
 		$scope.user = {};
 		var totalAge = parseInt($scope.age);
 
 
 		$scope.register = function(){
-			if (isNaN(totalAge)) return;
+			if (!isNaN(totalAge)) return;
 			users.createUser({
 				name: $scope.name,
 				age: totalAge,
@@ -280,7 +264,8 @@ app.controller('AuthCtrl', [
 			auth.register($scope.user).error(function(error){
 				$scope.error = error;
 			}).then(function(){
-				$state.go('Users');
+		   	   $window.location.href = $window.location.origin + '/#/Users';
+		   	   $window.location.reload();
 			});
 		};
 
@@ -288,18 +273,54 @@ app.controller('AuthCtrl', [
 			auth.logIn($scope.user).error(function(error){
 				$scope.error = error;
 			}).then(function(){
-				$state.go('Users');
+			   $window.location.href = $window.location.origin + '/#/Users';
+			   $window.location.reload();
 			});
 		};
 }]);
 
-app.controller('navCtrl', ['$scope', 'auth', 'socket', function($scope, auth, socket){
-	if(auth.isLoggedIn()){
-		// $scope.user = auth.currentUser();
-		// socket.io.on($scope.user.display, data => {
-		// 	console.log(data.notification, 'notification number');
-		// 	$scope.userNotification = data.notification;
-		// });
-		console.log('user logged in');
+app.directive('navBar', function(){
+	console.log('directive loaded');
+	return {
+		restrict: 'E',
+		templateUrl: 'directives/nav.html',
+		transclude: true,
+		scope: {
+			dataUser: '='
+		},
+	    controller: ['$scope' ,'auth', 'socket', 'users', '$window', function($scope, auth, socket, users, $window){
+			$scope.guest = auth.currentUser();
+			$scope.logOut = function(){
+				auth.logOut();
+				$scope.guest = auth.currentUser();
+				$scope.isLoggedIn = auth.isLoggedIn();
+			}
+			
+			console.log($window.location.hash, 'current location');
+			
+			var guest_id = $window.location.hash.split('/')[2];
+			users.get(guest_id).then(function(user){
+				console.log(user);
+				$scope.host = user;
+				
+				function notification(username, type, notifTarget){
+					type === 'add' ? 
+						socket.emit(username, {type: 'add', user: notifTarget}) : 
+							socket.emit(username, {type: 'reset', user: notifTarget});
+				}
+				
+				console.log($scope.host, 'is present');
+				$scope.resetNotification = function(){
+					notification($scope.guest.display.toLocaleLowerCase(), 'reset', $scope.guest.display.toLocaleLowerCase());
+				};
+					
+				socket.on($scope.guest.display.toLocaleLowerCase(), data => {
+					console.log(data, 'notification received');
+				});
+				
+			});
+			
+			$scope.isLoggedIn = auth.isLoggedIn();
+		}]
 	}
-}]);
+});

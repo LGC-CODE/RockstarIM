@@ -20,32 +20,41 @@ socketIO.listen = (io) => {
                 from: 'RockstarIM'
             } );
             
-            // socket.on(data.user, function(client){
-            //     if(client.type === 'add'){ 
-            //         socketModels.getNotifications(function(model){
-            //             model.find({username: client.user})
-            //                     .exec()
-            //                         .then(user =>{
-            //                             user.alert('add', (err, data)=>{
-            //                                 io.emit(client.user, {notification: data.notification});
-            //                             });
-            //                         })
-            //                         .catch(err=>new Error(err));
-            //         })
-            //     } else {
-            //         socketModels.getNotifications(function(model){
-            //             model.find({username: client.user})
-            //                     .exec()
-            //                         .then(user =>{
-            //                             user.alert('reset', (err, data)=>{
-            //                                 io.emit(client.user, {notification: data.notification});
-            //                             });
-            //                         })
-            //                         .catch(err=> new Error(err));
-            //         })
-            //     }
-            //     console.log(client, 'client');
-            // });
+            socket.on(data.user, function(client){
+                console.log('notification received ' + client);
+                
+                if(client.type === 'add'){ 
+                    console.log('adding notification', client.type);
+                    socketModels.getNotifications(function(model){
+                        model.findOne({username: client.user})
+                                .exec((err, user)=>{
+                                    if(err) new Error(err);
+                                    user.notification += 1;
+		                            user.save((err, data)=>{
+                                        if(err) new Error(err);
+                                        console.log('adding notification for user (client.user) ' + client.user);
+                                        io.emit(client.user, {notification: data.notification});
+                                    });
+                                });
+                    });
+                } else {
+                    socketModels.getNotifications(function(model){
+                        console.log('resetting notification', client.type);
+                        model.findOne({username: client.user})
+                                .exec((err, user) =>{
+                                    if(err) new Error(err);
+                                    user.notification = 0;
+		                            user.save((err, data)=>{
+                                        if(err) new Error(err);
+                                        console.log('resetting for user (client.user) ' + client.user);
+                                        io.emit(client.user, {notification: data.notification});
+                                    });
+                                });
+                    });
+                }
+                
+                console.log(client, 'client');
+            });
             
             io.emit(data.user, 'hello');
             
