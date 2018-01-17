@@ -19,6 +19,7 @@ app.factory('users', ['$http', 'auth', function($http, auth){ //creating service
 
 	o.get = function(id){
 		return $http.get('/allUsers/' + id).then(function(res){
+			console.log(res.data);
 			return res.data;
 		}).catch(err=>{ console.log(err.message) });
 	}
@@ -211,7 +212,7 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 		
 		if($scope.host.displayName !== $scope.guest.display) {
 			console.log('sending notification');
-			notification($scope.guest.name.toLowerCase(), 'add', $scope.host.displayName.toLocaleLowerCase());
+			notification($scope.guest.name.toLowerCase(), 'add', $scope.host.username.toLowerCase());
 		}
 	};
 
