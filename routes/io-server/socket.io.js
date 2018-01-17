@@ -16,11 +16,11 @@ socketIO.listen = (io) => {
                 
                 socket.join(session.room)
                 
-                io.emit( session.room, {
+                io.emit(session.room, {
                     room: session.room,
                     text: `Welcome, ${session.user}`,
                     from: 'RockstarIM'
-                } );
+                });
                 
                 socket.on(session.room, msg => {
     				io.in(session.room).emit(session.room, {
@@ -70,7 +70,7 @@ socketIO.listen = (io) => {
                         model.findOne({username: client.user})
                                 .exec((err, user) =>{
                                     if(err) new Error(err);
-                                    //console.log('accessing for user (client.user) ' + client.user, 'user object: ', user);
+                                    console.log('accessing for user (client.user) ' + client.user, 'user object: ', user);
                                     io.emit(client.user, {notification: user.notification});
                                 });
                     });

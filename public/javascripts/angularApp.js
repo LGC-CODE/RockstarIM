@@ -186,7 +186,7 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 				socket.emit(username, {type: 'reset', user: notifTarget});
 	}
 	
-	socket.emit('session', {room: $scope.host._id, user: $scope.guest.display.toLocaleLowerCase()});
+	socket.emit('session', {room: $scope.host._id, user: $scope.guest.name.toLowerCase()});
 	socket.on($scope.host._id, data => {
 		$scope.message.unshift({
 			text: data.text,					//display text and name
@@ -211,7 +211,7 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 		
 		if($scope.host.displayName !== $scope.guest.display) {
 			console.log('sending notification');
-			notification($scope.guest.display.toLocaleLowerCase(), 'add', $scope.host.displayName.toLocaleLowerCase());
+			notification($scope.guest.name.toLowerCase(), 'add', $scope.host.displayName.toLocaleLowerCase());
 		}
 	};
 
@@ -282,8 +282,6 @@ app.directive('navBar', function(){
 				$scope.isLoggedIn = auth.isLoggedIn();
 			};
 			
-			socket.emit('access', {user: $scope.guest.display.toLocaleLowerCase()});
-			
 			function notification(username, type, notifTarget){
 				console.log('notifying user:', username, type);
 				type === 'add' ? 
@@ -293,17 +291,18 @@ app.directive('navBar', function(){
 			}
 			
 			if(auth.isLoggedIn()){
-				notification($scope.guest.display.toLowerCase(), 'get', $scope.guest.display.toLowerCase());
+				socket.emit('access', {user: $scope.guest.name.toLocaleLowerCase()});
+				notification($scope.guest.name.toLowerCase(), 'get', $scope.guest.name.toLowerCase());
+				
+				socket.on($scope.guest.name.toLowerCase(), data => {
+					$scope.notification = data.notification;
+					$scope.$apply();
+				});
 			}
 			
 			$scope.resetNotification = function(){
-				notification($scope.guest.display.toLocaleLowerCase(), 'reset', $scope.guest.display.toLocaleLowerCase());
+				notification($scope.guest.name.toLocaleLowerCase(), 'reset', $scope.guest.name.toLocaleLowerCase());
 			};
-			
-			socket.on($scope.guest.display.toLowerCase(), data => {
-				$scope.notification = data.notification;
-				$scope.$apply();
-			});
 			
 			$scope.isLoggedIn = auth.isLoggedIn();
 		}]
