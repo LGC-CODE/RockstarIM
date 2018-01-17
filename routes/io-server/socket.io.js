@@ -10,21 +10,34 @@ socketIO.run = (server) => {
 socketIO.listen = (io) => {
     io.on('connection', (socket) => {
         console.log('user connected');
-        socket.on('join', (data) => {
-            socket.join(data.room);
-            console.log(data.room, 'room received');
+        socket.on('access', (data) => {
             
-            io.emit( data.room, {
-                room: data.room,
-                text: `Welcome, ${data.user}`,
-                from: 'RockstarIM'
-            } );
+            socket.on('session', session => {
+                
+                socket.join(session.room)
+                
+                io.emit( session.room, {
+                    room: session.room,
+                    text: `Welcome, ${session.user}`,
+                    from: 'RockstarIM'
+                } );
+                
+                socket.on(session.room, msg => {
+    				io.in(session.room).emit(session.room, {
+                		room: msg.room,
+                		text: msg.text,
+                		from: msg.from
+                	});
+    			});
+                
+                console.log(session, 'room received');
+            });
             
             socket.on(data.user, function(client){
-                console.log('notification received ' + client);
+                //console.log('notification received ' + client);
                 
                 if(client.type === 'add'){ 
-                    console.log('adding notification', client.type);
+                    //console.log('adding notification', client.type);
                     socketModels.getNotifications(function(model){
                         model.findOne({username: client.user})
                                 .exec((err, user)=>{
@@ -32,39 +45,39 @@ socketIO.listen = (io) => {
                                     user.notification += 1;
 		                            user.save((err, data)=>{
                                         if(err) new Error(err);
-                                        console.log('adding notification for user (client.user) ' + client.user);
+                                        //console.log('adding notification for user (client.user) ' + client.user);
                                         io.emit(client.user, {notification: data.notification});
                                     });
                                 });
                     });
-                } else {
+                } else if(client.type === 'reset'){
                     socketModels.getNotifications(function(model){
-                        console.log('resetting notification', client.type);
+                        //console.log('resetting notification', client.type);
                         model.findOne({username: client.user})
                                 .exec((err, user) =>{
                                     if(err) new Error(err);
                                     user.notification = 0;
 		                            user.save((err, data)=>{
                                         if(err) new Error(err);
-                                        console.log('resetting for user (client.user) ' + client.user);
+                                        //console.log('resetting for user (client.user) ' + client.user);
                                         io.emit(client.user, {notification: data.notification});
                                     });
+                                });
+                    });
+                } else if(client.type === 'get'){
+                    socketModels.getNotifications(function(model){
+                        //console.log('accessing notification', client.type);
+                        model.findOne({username: client.user})
+                                .exec((err, user) =>{
+                                    if(err) new Error(err);
+                                    //console.log('accessing for user (client.user) ' + client.user, 'user object: ', user);
+                                    io.emit(client.user, {notification: user.notification});
                                 });
                     });
                 }
                 
                 console.log(client, 'client');
             });
-            
-            io.emit(data.user, 'hello');
-            
-            socket.on(data.room, msg => {
-				io.in(data.room).emit(data.room, {
-            		room: msg.room,
-            		text: msg.text,
-            		from: msg.from
-            	});
-			});
         })
     })
 }

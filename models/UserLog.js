@@ -52,6 +52,7 @@ UserSchema.methods.generateJWT =  function(){
 		age: this.age,
 		pictureUrl: this.pictureUrl,
 		displayName: this.displayName,
+		notification: this.notification,
 		exp: parseInt(exp.getTime() / 1000)
 	}, 'SECRET');
 };

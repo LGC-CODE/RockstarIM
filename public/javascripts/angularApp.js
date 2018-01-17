@@ -2,6 +2,8 @@ var app = angular.module('RockstarIM',['ui.router']);
 
 app.factory('users', ['$http', 'auth', function($http, auth){ //creating service syntax
 	var o = { users: [] };
+	
+	o.host = {};
 
 	o.getAllUsers = function(){
 		return $http.get('/allUsers').success(function(data){
@@ -18,26 +20,10 @@ app.factory('users', ['$http', 'auth', function($http, auth){ //creating service
 	o.get = function(id){
 		return $http.get('/allUsers/' + id).then(function(res){
 			return res.data;
-		});
+		}).catch(err=>{ console.log(err.message) });
 	}
 
 	return o;
-
-}]);
-
-app.factory('user-details', ['$http', '$window', function($http, $window){ //creating service syntax
-	var v = {};
-	
-	v.getNotifications = function(){
-		
-		var token = $window.localStorage['rockstar-token']
-		
-		if(token){
-			
-		}
-	}
-	
-	return v;
 
 }]);
 
@@ -118,6 +104,7 @@ app.config([
 					controller: 'mainCtrl',
 					resolve: {
 						userRetrieve: ['$stateParams', 'users', function($stateParams, users){
+							console.log(users.get($stateParams.id), 'resolving');
 							return users.get($stateParams.id);
 						}]
 					},
@@ -189,7 +176,9 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 	$scope.message = [];
 	$scope.text = "";
 	$scope.guest = auth.currentUser();
+	
 	$scope.host = userRetrieve;
+	
 	
 	function notification(username, type, notifTarget){
 		type === 'add' ? 
@@ -197,30 +186,22 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 				socket.emit(username, {type: 'reset', user: notifTarget});
 	}
 	
-	function private(host_id){
-		socket.emit('join', {room: host_id, user: $scope.guest.display.toLocaleLowerCase()});
-		socket.on(host_id, data => {
-			
-			$scope.message.unshift({
-				text: data.text,					//display text and name
-				fromUser: data.from,
-				room: data.room
-		 	});
-		 	
-		 	if($scope.host.displayName !== $scope.guest.display) {
-				console.log('sending notification');
-				notification($scope.guest.display.toLocaleLowerCase(), 'add', $scope.host.displayName.toLocaleLowerCase());
-			}
-			
-			$scope.$apply();
+	socket.emit('session', {room: $scope.host._id, user: $scope.guest.display.toLocaleLowerCase()});
+	socket.on($scope.host._id, data => {
+		console.log($scope.host.displayName, 'supposed to be host name');
+		$scope.message.unshift({
+			text: data.text,					//display text and name
+			fromUser: data.from,
+			room: data.room
+	 	});
+		
+		$scope.$apply();
 
-		});
-	};
-	
-	private($scope.host._id);
+	});
 	
 	$scope.addMessage = function(){
 		if(!$scope.text) { return; }
+		
 		socket.emit($scope.host._id, { 
 			room: $scope.ident,
 			text: $scope.text,
@@ -228,6 +209,11 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 		});
 
 		$scope.text = "";
+		
+		if($scope.host.displayName !== $scope.guest.display) {
+			console.log('sending notification');
+			notification($scope.guest.display.toLocaleLowerCase(), 'add', $scope.host.displayName.toLocaleLowerCase());
+		}
 	};
 
 }]);
@@ -290,34 +276,34 @@ app.directive('navBar', function(){
 		},
 	    controller: ['$scope' ,'auth', 'socket', 'users', '$window', function($scope, auth, socket, users, $window){
 			$scope.guest = auth.currentUser();
+			var host_id = $window.location.hash.split('/')[2];
+			
 			$scope.logOut = function(){
 				auth.logOut();
 				$scope.guest = auth.currentUser();
 				$scope.isLoggedIn = auth.isLoggedIn();
+			};
+			
+			socket.emit('access', {user: $scope.guest.display.toLocaleLowerCase()});
+			
+			function notification(username, type, notifTarget){
+				console.log('notifying user:', username, type);
+				type === 'add' ? 
+					socket.emit(username, {type: 'add', user: notifTarget}) : 
+						type === 'get' ? socket.emit(username, { type: 'get', user: notifTarget }) :
+							socket.emit(username, {type: 'reset', user: notifTarget});
 			}
 			
-			console.log($window.location.hash, 'current location');
+			notification($scope.guest.display.toLowerCase(), 'get', $scope.guest.display.toLowerCase());
 			
-			var guest_id = $window.location.hash.split('/')[2];
-			users.get(guest_id).then(function(user){
-				console.log(user);
-				$scope.host = user;
-				
-				function notification(username, type, notifTarget){
-					type === 'add' ? 
-						socket.emit(username, {type: 'add', user: notifTarget}) : 
-							socket.emit(username, {type: 'reset', user: notifTarget});
-				}
-				
-				console.log($scope.host, 'is present');
-				$scope.resetNotification = function(){
-					notification($scope.guest.display.toLocaleLowerCase(), 'reset', $scope.guest.display.toLocaleLowerCase());
-				};
-					
-				socket.on($scope.guest.display.toLocaleLowerCase(), data => {
-					console.log(data, 'notification received');
-				});
-				
+			$scope.resetNotification = function(){
+				notification($scope.guest.display.toLocaleLowerCase(), 'reset', $scope.guest.display.toLocaleLowerCase());
+			};
+			
+			socket.on($scope.guest.display.toLowerCase(), data => {
+				console.log($scope.guest.display.toLowerCase(), 'supposed to be current logged in user');
+				$scope.notification = data.notification;
+				$scope.$apply();
 			});
 			
 			$scope.isLoggedIn = auth.isLoggedIn();

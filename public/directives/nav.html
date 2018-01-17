@@ -1,4 +1,4 @@
-<nav class="navbar navbar-default">
+<nav ng-init="onload()" class="navbar navbar-default">
     <div class="container-fluid">
         <button type="button" class="navbar-toggle collapsed" 
       		data-toggle="collapse" 
@@ -12,7 +12,7 @@
         <div class="collapse navbar-collapse" id="nav-collapse-1">
             <ul class="nav navbar-nav navbar-right">
               <li><a href="/#/Users">Home</a></li>
-              <li ng-show="isLoggedIn"><a ng-click="resetNotification()" href="#/RockstarIM/{{ guest._id }}">{{ guest.name }} <span class="nfy">{{ userNotification }}</span></a></li>
+              <li ng-show="isLoggedIn"><a ng-click="resetNotification()" href="#/RockstarIM/{{ guest._id }}">{{ guest.name }} <span class="label label-success">{{ notification }}</span></a></li>
               <li ng-show="isLoggedIn"><a href="#" ng-click="logOut()">Log Out</a></li>
               <li ng-hide="isLoggedIn"><a href="/#/login">Log In</a></li>
               <li ng-hide="isLoggedIn"><a href="/#/register">Register</a></li>
