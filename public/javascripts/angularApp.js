@@ -188,7 +188,6 @@ app.controller('mainCtrl', [ '$scope', '$stateParams', 'userRetrieve', 'users', 
 	
 	socket.emit('session', {room: $scope.host._id, user: $scope.guest.display.toLocaleLowerCase()});
 	socket.on($scope.host._id, data => {
-		console.log($scope.host.displayName, 'supposed to be host name');
 		$scope.message.unshift({
 			text: data.text,					//display text and name
 			fromUser: data.from,
@@ -266,7 +265,6 @@ app.controller('AuthCtrl', [
 }]);
 
 app.directive('navBar', function(){
-	console.log('directive loaded');
 	return {
 		restrict: 'E',
 		templateUrl: 'directives/nav.html',
@@ -294,14 +292,15 @@ app.directive('navBar', function(){
 							socket.emit(username, {type: 'reset', user: notifTarget});
 			}
 			
-			notification($scope.guest.display.toLowerCase(), 'get', $scope.guest.display.toLowerCase());
+			if(auth.isLoggedIn()){
+				notification($scope.guest.display.toLowerCase(), 'get', $scope.guest.display.toLowerCase());
+			}
 			
 			$scope.resetNotification = function(){
 				notification($scope.guest.display.toLocaleLowerCase(), 'reset', $scope.guest.display.toLocaleLowerCase());
 			};
 			
 			socket.on($scope.guest.display.toLowerCase(), data => {
-				console.log($scope.guest.display.toLowerCase(), 'supposed to be current logged in user');
 				$scope.notification = data.notification;
 				$scope.$apply();
 			});
